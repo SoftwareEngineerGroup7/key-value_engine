@@ -24,7 +24,8 @@ class PolarString {
 
   bool empty() const { return size_ == 0; }
 
-  char operator[](size_t n) const {
+  char operator[](size_t n) const
+  {  
     return data_[n];
   }
 
@@ -48,7 +49,7 @@ class PolarString {
     return ((size_ >= x.size_) &&
             (memcmp(data_ + size_ - x.size_, x.data_, x.size_) == 0));
   }
-
+    friend class HashFunc;
  private:
   const char* data_;
   size_t size_;

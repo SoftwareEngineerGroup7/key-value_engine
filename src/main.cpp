@@ -1,10 +1,11 @@
 #include <assert.h>
 #include <stdio.h>
 #include <string>
-#include "include/engine.h"
+#include "engine.h"
 
 static const char kEnginePath[] = "/tmp/test_engine";
 static const char kDumpPath[] = "/tmp/test_dump";
+static const char Aof[] = "/tmp/Aof";
 
 using namespace polar_race;
 
@@ -25,13 +26,14 @@ private:
 };
 
 int main() {
-  Engine *engine = NULL;
+  Engine *engine = new MyEngine;
 
-  RetCode ret = Engine::Open(kEnginePath, &engine);
-  assert (ret == kSucc);
+  //RetCode ret = Engine::Open(kEnginePath, &engine);
+  //assert (ret == kSucc);
 
 
-  ret = engine->Write("aaa", "aaaaaaaaaaa");
+  RetCode ret = engine->Write("aaa", "aaaaaaaaaaa");
+std::cout << 1 << std::endl;
   assert (ret == kSucc);
   ret = engine->Write("aaa", "111111111111111111111111111111111111111111");
   ret = engine->Write("aaa", "2222222");
@@ -52,7 +54,7 @@ int main() {
 
   int key_cnt = 0;
   DumpVisitor vistor(&key_cnt);
-  ret = engine->Range("b", "", vistor);
+ // ret = engine->Range("b", "", vistor);
   assert (ret == kSucc);
   printf("Range key cnt: %d\n", key_cnt);
   
