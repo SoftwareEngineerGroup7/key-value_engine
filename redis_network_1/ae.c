@@ -10,6 +10,41 @@
 
 
 
+/*
+ * 创建文件事件关联相应的处理器　但是为啥都是proc tcpHandler 
+ *
+ */
+int aeCreateFileEvent(aeEventLoop *eventLoop, int fd, int mask, aeFileproc* proc, void *clientData) {
+    
+    if (fd >= eventLoop->setsize) {
+        errno = ERANGE;  // 表示超出界限
+        return AE_ERR;
+    }    
+
+    /* 取出文件事件结构 */
+    aeFileEvent *fe = &eventLoop->events[fd];
+
+    /* 监听指定fd的事件 */
+    if (aeApiAddEvent(eventLoop, fd, mask) == -1)
+        return AE_ERR;
+
+    /* 设置文件事件类型 以及事件的处理器 */
+    fd->mask |= mask;
+    if (mask & AE_READABLE) fe->rfileProc = proc;
+    if (mask & AE_WRITABLE) fe->wfileProc = proc;
+    
+    /* 私有数据 ???*/
+    fe->clientData = clientData;
+
+    /* 如果有需要 更新事件处理器的最大fd */
+    if (fd > eventLoop -> maxfd)
+        eventLoop->maxfd = fd;
+
+    return AE_OK;
+}
+
+
+
 
 /*
  * 处理所有已达到的时间事件 以及所有已就绪的文件事件
@@ -89,6 +124,8 @@ int aeProcessEvents(aeEventLoop *eventLoop, int flags) {
                 /* 可读事件 */
                 if (fe->mask & mask & AE_WRITABLE) {
                     rfired = 1;
+    　　/*×××××××××××××××××××××××××××××××××××××××××××××××××××××××××××××××××××××××××××××××××××××××××××××××××××*/
+                    /*Amazing  经过gdb测得当有连接时  此处会调用acceptTcpHandler at networking.c*/
                     fe->rfileProc(eventLoop, fd, fe->clientData, mask);
                 }
 
