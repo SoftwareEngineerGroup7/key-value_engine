@@ -17,6 +17,55 @@
 #define REDIS_DEFAULT_DBNUM     16
 #define REDIS_DEFAULT_TCP_KEEPALIVE 0
 
+
+typedef struct redisClient {
+
+    /**/
+    int fd;
+
+    /*正在使用的数据库*/
+    redisDb * db;
+    
+    /*正在使用的数据库的id*/
+    int dictid;
+    
+    /*客户端的名字*/
+    robj *name;
+    
+    /*查询缓冲区*/
+    sds querybuf;
+    /*查询缓冲区长度峰值*/
+    size_t querybuf_peak;
+    
+    /* 参数数量 */
+    int argc;
+
+
+    /*参数对象数组*/
+    robj **argv;
+    
+    /* 记录被客户端执行的命令 */
+    struct redisCommand *cmd, *lastcmd;
+    
+    /* 请求的类型 是内联命令还是多条命令 */
+    int reqtype;
+    
+    /* 剩余未读取的命令内容数 */
+    int multibulklen;
+    
+    /* 命令长度 */
+    long bulklen;
+    
+    unsigned long reply_bytes; // 回复链表中对象的总大小
+
+	int bufpos; // 回复偏移量
+
+	char buf[REDIS_REPLY_CHUNK_BYTES];
+} redisClient;
+
+
+
+
 struct redisServer {
     
     /* 配置文件的绝对路径 */
