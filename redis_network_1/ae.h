@@ -44,6 +44,7 @@ typedef struct aeFileEvent {
 	 
 } aeFileEvent;
 
+
 /* Time event structure -- 时间事件结构 */
 typedef struct aeTimeEvent {
 
@@ -62,6 +63,21 @@ typedef struct aeTimeEvent {
 	struct aeTimeEvent *next; // 指向下个时间事件结构，形成链表
 
 } aeTimeEvent;
+
+
+/*
+ * 已就绪事件
+ */
+typedef struct asFiredEvent {
+
+    /* 已就绪的文件描述符 */
+    int fd;
+
+    /*
+     * 事件类型掩码AE_READABLE 和AE_WRITABLE 或者是两者的或
+     */
+    int mask;
+} aeFiredEvent;
 
 
 /*  事件处理器　全局只需要一份EventLoop */

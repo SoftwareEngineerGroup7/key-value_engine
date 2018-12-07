@@ -10,6 +10,67 @@
 
 
 
+
+/*
+ * 初始化事件处理器状态
+ * 创建一个 eventLoop
+ */
+
+aeEventLoop *aeCreateEventLoop(int setsize) {
+    
+    aeEventLoop *eventLoop;
+    int i;
+
+    /*　创建事件状态结构　*/
+    if ((eventLoop = zmalloc(sizeof(*eventLoop))) == NULL) goto err;
+
+    /* 初始化文件事件节结构和已就绪文件事件的结构数组*/
+    eventLoop->events = zmalloc(sizeof(aeFileEvent)*setsize);
+    eventLoop->fired = zmalloc(sizeof(aeFiredEvent)*setsize);
+    /* 内存分配失败 */
+    if (eventLoop->events == NULL || eventLoop->fired == NULL) goto  err;
+
+    /*设置数组大小*/
+    eventLoop->setsize = 0;
+
+    /*初始化执行最近一次执行执行时间*/
+    eventLoop->lastTime = tiem(NULL);
+
+    /*初始化时间事件结构*/
+    eventLoop->timeEventHead = NULL;
+    /*随着时间事件的增加而增加*/
+    eventLoop->timeEventNextId = 0;
+
+
+    eventLoop->stop = 0;
+    eventLoop->maxfd = -1;
+    eventLoop->beforesleep = NULL;
+
+    /* 创建一个新的 epoll 实例，并将它赋值给 eventLoop */
+    if (aeApiCreate(eventLoop) == -1) goto err;
+
+    /* 初始化监听事件
+     * AE_NONE　表示不监听任何事件 
+     */
+    for (i = 0; i < setsize; i++ ) 
+        eventLoop->events[i].mask = AE_NONE;
+    
+    /* 返回事件循环 */
+    return eventLoop;
+
+
+err:
+    if (eventLoop ) {
+        zfree(eventLoop->events);
+        zfree(eventLoop->fired);
+        zfree(eventLoop);
+    }
+    return NULL;
+
+}
+
+
+
 /*
  * 创建文件事件关联相应的处理器　但是为啥都是proc tcpHandler 
  *
@@ -82,7 +143,7 @@ int aeProcessEvents(aeEventLoop *eventLoop, int flags) {
             if (shortest) {
             
 
-
+            /*To Do*/
 
 
 
