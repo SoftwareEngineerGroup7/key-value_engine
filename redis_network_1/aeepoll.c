@@ -47,7 +47,7 @@ int aeApiAddEvent (aeEventLoop *eventLoop, int fd, int mask) {
     /*如果fd已经没有任何关联 那么这是一个ADD操作 如果已经关联那么这是一个MOD操作*/
     int op = eventLoop->events[fd].mask == AE_NONE ? EPOLL_CTL_ADD : EPOLL_CTL_MOD;
 
-    /* 注册事件到epoll */
+    /* 注册事件到epoll  ee.data 是一个uint32_t  */
     ee.data = 0;
     mask |= eventLoop->events[fd].mask;
     /* 可读可写事件 */
@@ -62,3 +62,50 @@ int aeApiAddEvent (aeEventLoop *eventLoop, int fd, int mask) {
 
     return 0;
 } 
+
+
+/*
+ * 获取可执行事件
+ */
+int aeApiPoll(aeEventLoop *eventLoop, struct timeval *tvp) {
+    aeApiState *state = eventLoop->apidata;
+    int retval, numevents = 0;
+
+    /* 等待时间  tvp 不为空则等待一段时间 */
+    /* 函数调用完毕之后 state->events 中存放了就绪事件的信息 */
+    retval = epooll_wait (state->epfd, state->events, eventLoop->setsize,
+                          tvp ? (tvp->tv_sec*1000 + tvp->tv_usec/1000) : -1);
+
+    if (retval > 0) { 
+
+        /* 为已就绪事件设置相应模式 */
+        numevents = retval;
+        for (j = 0; j < numevents; j++) {
+            int mask = 0;
+            struct epoll_event *e = state->event + j;
+            
+            /* &,&& 与 |,|| 作为逻辑运算符时 单与双的计算结果是相同的  
+             * &, | 做位运算时， &是求交集 |是并起来
+             * 
+             *  例如如下首例之中，可以看到 e->events与EPOLLIN 是否有交集
+             *  mask = mask | AE_READABLE, 这是给mask 赋予AE_READABLE 的属性 */
+            
+            if (e->events & EPOLLIN) mask |= AE_READABLE;   //可读
+            if (e->events & EPOLLOUT) mask |= AE_WRITABLE;  //可写    
+            if (e->events & EPOLLERR) mask |= AE_WRITABLE;  //出错
+            if (e->events & EPOLLHUP) mask |= AE_WRITABLE;
+
+            /* 将事件集的各项属性加入已就绪队列之中*/
+            eventLoop->fired[j].fd = e->data.fd;
+            /* 可以看到这个是传了这个套接字的所有事件集合 那么应该是处理完所有事件材返回epoll_wait*/
+            eventLoop->fired[j].mask = mask;
+        }
+    }
+
+    /* 返回已就绪事件的个数*/
+    return numevents;
+ }
+
+
+
+

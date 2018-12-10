@@ -108,9 +108,10 @@ void acceptTcpHandler(aeEventLoop *el, int fd, void *private, int mask) {
     int cport, cfd, max = 2;
     char cip[REDIS_IP_LEN];
 
-    /* max 为啥是2*/
+    /* max 为2  在源码中这里的定义是1000 这里就简化了一下*/
     while (max--) {
-        cfd = anetEcpAccept(server.neterr, fd, cip, sizeof(cip), &cport);
+        /*anetEcpAccept 通过接受监听的本端套接字 获取请求连接的客户端的地址 并为之创建 套接字标示之*/
+        cfd = anetTcpAccept(server.neterr, fd, cip, sizeof(cip), &cport);
         if (cfd == ANET_ERR) {
             if (errno != EWOULDBLOCK) {
                 /*log*/

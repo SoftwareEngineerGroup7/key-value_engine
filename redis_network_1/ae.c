@@ -8,10 +8,6 @@
 #include "ae.h"
 
 
-int create ma  d {
-
-}
-
 
 /*
  * 初始化事件处理器状态
@@ -75,7 +71,6 @@ err:
 
 /*
  * 创建文件事件关联相应的处理器　但是为啥都是proc tcpHandler 
- *
  */
 int aeCreateFileEvent(aeEventLoop *eventLoop, int fd, int mask, aeFileproc* proc, void *clientData) {
     
@@ -105,8 +100,6 @@ int aeCreateFileEvent(aeEventLoop *eventLoop, int fd, int mask, aeFileproc* proc
 
     return AE_OK;
 }
-
-
 
 
 /*
@@ -214,10 +207,6 @@ int aeProcessEvents(aeEventLoop *eventLoop, int flags) {
 
 
 
-
-
-
-
 /*
  * 事件处理器的主循环
  */
@@ -234,4 +223,4 @@ void aeMain(aeEventLoop *eventLoop) {
         /* 开始处理所有事件 */
         aeProcessEvents (eventLoop, AE_ALL_EVENTS);
     }
- }
+}
