@@ -11,30 +11,52 @@
  */
 int aeApiCreate(aeEventLoop *eventLoop) {
 
-    aeApiState *statex = zmalloc(sizeof(aeApiCreate);
-    if(!state) return -1;
+    aeApiState *state = zmalloc(sizeof(aeApiState));
 
-    /*初始化事件集 */
-    state->events = zmalloc(sizeof(struct epoll_event) *eventLoop->setsize);
-    if (!state->event)
-    {
+    if (!state) return -1;
+
+    /* 初始化事件槽空间 */
+    state->events = zmalloc(sizeof(struct epoll_event)*eventLoop->setsize);
+    if (!state->events) {
         zfree(state);
-         return -1;
+        return -1;
     }
-    /*创建一个epoll实例 一般来说　一个应用之中　只需要有一个epoll 实例就足够了*/
-    state->epfd = epoll_create(1024);
+
+    /* 创建 epoll 实例,一般来说,一个应用之中,只需要一个 epoll 实例便足够了 */
+    state->epfd = epoll_create(1024); // 1024 is just a hint for the kernel
     if (state->epfd == -1) {
         zfree(state->events);
         zfree(state);
         return -1;
     }
 
-    /*赋值给eventloop apidata 被设置成了私有数据*/
+    /* 赋值给 eventLoop
+	 * apidata这个玩意被设置为了私有数据*/
     eventLoop->apidata = state;
     return 0;
-
 }
 
+/*
+ * 调整事件槽大小
+ */
+int aeApiResize(aeEventLoop *eventLoop, int setsize) {
+
+    aeApiState *state = eventLoop->apidata;
+    /*重新分配事件槽大小*/
+    state->events = zrealloc(state->events, sizeof(struct epoll_event)*setsize);
+    return 0;
+}
+
+/*
+ * 释放epoll实例和事件槽
+ */
+void aeAPiFree(aeEventLoop *eventLoop)
+{
+    aeApiState *state = eventLoop->apidata;
+    close(state->epfd);
+    zfree(state->events);
+    zfree(state);
+}
 
 /*
  * 关联给定事件到fd
@@ -61,8 +83,32 @@ int aeApiAddEvent (aeEventLoop *eventLoop, int fd, int mask) {
     if (epoll_ctl (state->epfd, op, fd, &ee) == -1) return -1;
 
     return 0;
-} 
+}
 
+/*
+ * 从 fd 中删除给定事件
+ */
+void  aeApiDelEvent (aeEventLoop *eventLoop, int fd, int delmask) {
+    aeApiState *state = eventLoop->apidata;
+    struct epoll_event ee;
+    
+    /*在events[fd].mask 中除去delmask这个属性*/
+    int mask = eventLoop->events[fd].mask & (~delmask);
+    
+    ee.events = 0;
+    if (mask & AE_READABLE) ee.events |= EPOLLIN;
+    if (mask & AE_WRITABLE) ee.events |= EPOLLOUT;
+    ee.data.u64 = 0;
+    ee.data.fd = fd;
+
+    if (mask != AE_NONE) {
+        epoll_ctl(state->epfd, EPOLL_CTL_MOD, fd, &ee);
+    } else {
+        /* kernel < 2,6.9 规定event 不能为null */
+        epoll_ctl(state->epfd, EPOLL_CTL_DEL, fd, &ee);
+    }
+
+}
 
 /*
  * 获取可执行事件
