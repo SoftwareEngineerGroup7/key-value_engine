@@ -7,22 +7,22 @@
 
 #include<stdio.h>
 
-int swap(int &a , int &b)
+int swap(int **a , int **b)
 {
-    int *q;
-    q = a;
-    a = b;
-    b = q;
-    printf("%d %d",*a,*b);
+    int q;
+    q = **a;
+    **a = **b;
+    **b = q;
+    printf("%d %d",**a,**b);
 }
 
 int main ()
 {
-    int a=3,b=8;
-    int *c = &a, *d = &b;
+    int a=3, b=8;
 
-    swap(c,d);
+    int *p = &a,*q = &b;
+    swap(&p , &q);
 
-    printf("%d %d",*c,*d);
+    printf("%d %d", a ,b);
 
 }
