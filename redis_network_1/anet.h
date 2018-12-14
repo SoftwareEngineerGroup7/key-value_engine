@@ -19,5 +19,10 @@
 #define ANET_NONE 0
 #define ANET_IP_ONLY  (1<<0)
 
+int anetTcpServer(char *err, int port, char *bindaddr, int backlog);
+int anetTcpAccept(char *err, int serversock, char *ip, size_t ip_len, int *port);
+int anetNonBlock(char *err, int fd);
+int anetEnableTcpNoDelay(char *err, int fd);
+int anetKeepAlive(char *err, int fd, int interval);
 
 #endif

@@ -8,8 +8,21 @@
 #ifndef _AE_H
 #define _AE_H
 
+#include <time.h>
 
+/* 事件执行状态 */
+// 成功
+#define AE_OK 0
+// 出错
+#define AE_ERR -1
 
+/* 文件事件状态 */
+// 未设置
+#define AE_NONE 0
+// 可读
+#define AE_READABLE 1
+// 可写
+#define AE_WRITABLE 2
 
 /* 时间处理器的执行 flags */
 // 文件事件
@@ -115,5 +128,13 @@ typedef struct aeEventLoop {
 
 } aeEventLoop;
 
+/* 处理函数 */
+aeEventLoop *aeCreateEventLoop(int setsize);
+int aeCreateFileEvent(aeEventLoop *eventLoop, int fd, int mask, aeFileProc *proc, void *clientData);
+long long aeCreateTimeEvent(aeEventLoop *eventLoop, long long milliseconds, aeTimeProc *proc, void *clientData,
+	aeEventFinalizerProc *finalizerProc);
+int aeDeleteTimeEvent(aeEventLoop *eventLoop, long long id);
+int aeProcessEvents(aeEventLoop *eventLoop, int flags);
+void aeMain(aeEventLoop *eventLoop);
 
 #endif

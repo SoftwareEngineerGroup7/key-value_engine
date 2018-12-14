@@ -9,7 +9,8 @@
 /*
  * 创建一个epoll 实例 并将结果返回 eventLoop
  */
-int aeApiCreate(aeEventLoop *eventLoop) {
+int aeApiCreate(aeEventLoop *eventLoop)
+{
 
     aeApiState *state = zmalloc(sizeof(aeApiState));
 
@@ -39,7 +40,8 @@ int aeApiCreate(aeEventLoop *eventLoop) {
 /*
  * 调整事件槽大小
  */
-int aeApiResize(aeEventLoop *eventLoop, int setsize) {
+int aeApiResize(aeEventLoop *eventLoop, int setsize)
+{
 
     aeApiState *state = eventLoop->apidata;
     /*重新分配事件槽大小*/
@@ -88,7 +90,8 @@ int aeApiAddEvent (aeEventLoop *eventLoop, int fd, int mask) {
 /*
  * 从 fd 中删除给定事件
  */
-void  aeApiDelEvent (aeEventLoop *eventLoop, int fd, int delmask) {
+void  aeApiDelEvent (aeEventLoop *eventLoop, int fd, int delmask)
+{
     aeApiState *state = eventLoop->apidata;
     struct epoll_event ee;
     
@@ -107,13 +110,13 @@ void  aeApiDelEvent (aeEventLoop *eventLoop, int fd, int delmask) {
         /* kernel < 2,6.9 规定event 不能为null */
         epoll_ctl(state->epfd, EPOLL_CTL_DEL, fd, &ee);
     }
-
 }
 
 /*
  * 获取可执行事件
  */
-int aeApiPoll(aeEventLoop *eventLoop, struct timeval *tvp) {
+int aeApiPoll(aeEventLoop *eventLoop, struct timeval *tvp)
+{
     aeApiState *state = eventLoop->apidata;
     int retval, numevents = 0;
 
@@ -123,12 +126,12 @@ int aeApiPoll(aeEventLoop *eventLoop, struct timeval *tvp) {
                           tvp ? (tvp->tv_sec*1000 + tvp->tv_usec/1000) : -1);
 
     if (retval > 0) { 
-
+        int j;
         /* 为已就绪事件设置相应模式 */
         numevents = retval;
         for (j = 0; j < numevents; j++) {
             int mask = 0;
-            struct epoll_event *e = state->event + j;
+            struct epoll_event *e = state->events + j;
             
             /* &,&& 与 |,|| 作为逻辑运算符时 单与双的计算结果是相同的  
              * &, | 做位运算时， &是求交集 |是并起来
@@ -150,7 +153,7 @@ int aeApiPoll(aeEventLoop *eventLoop, struct timeval *tvp) {
 
     /* 返回已就绪事件的个数*/
     return numevents;
- }
+}
 
 
 
