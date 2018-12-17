@@ -5,10 +5,81 @@
 	> Created Time: 2018年12月04日 星期二 16时38分59秒
  ************************************************************************/
 
-#include<stdio.h>
 #include "redis.h"
 
+#include <time.h>
+#include <signal.h>
+#include <sys/wait.h>
+#include <errno.h>
+#include <assert.h>
+#include <ctype.h>
+#include <stdarg.h>
+#include <arpa/inet.h>
+#include <sys/stat.h>
+#include <fcntl.h>
+#include <sys/time.h>
+#include <sys/resource.h>
+#include <sys/uio.h>
+#include <limits.h>
+#include <float.h>
+#include <math.h>
+#include <sys/resource.h>
+#include <sys/utsname.h>
+#include <locale.h>
 
+/*=============================== Function declariton =======================*/
+void setCommand(redisClient *c);
+void getCommand(redisClient *c);
+/*================================= Globals ================================= */
+
+/* Global vars */
+struct redisServer server; /* server global state */
+
+
+/*
+ * 设置信号处理函数
+ */
+void setupSignalHandlers(void) {
+	struct sigaction act;
+	sigemptyset(&act.sa_mask);
+	act.sa_flags = 0;
+	act.sa_handler = sigtermHandler;
+	sigaction(SIGTERM, &act, NULL);
+
+}
+
+/*
+ * 在port端口监听
+ */
+int listenToPort(int port, int *fds, int *count) {
+	int j;
+
+	if (server.bindaddr_count == 0) server.bindaddr[0] = NULL;
+
+	for (j = 0; j < server.bindaddr_count || j == 0; j++) {
+		if (server.bindaddr[j] == NULL) {
+			// 这里做了一些简化工作,那就是仅支持ipv4即可
+			fds[*count] = anetTcpServer(server.neterr, port, NULL, server.tcp_backlog);
+			if (fds[*count] != ANET_ERR) {
+				anetNonBlock(NULL, fds[*count]); // 设置为非阻塞
+				(*count)++;
+			}
+			if (*count) break;
+		}
+		else {
+			// Bind IPv4 address.
+			fds[*count] = anetTcpServer(server.neterr, port, server.bindaddr[j],
+				server.tcp_backlog);
+		}
+
+		if (fds[*count] == ANET_ERR) {
+			return REDIS_ERR;
+		}
+		anetNonBlock(NULL, fds[*count]);
+		(*count)++;
+	}
+	return REDIS_OK;
+}
 
 /*
  * 初始化服务器的配置信息
