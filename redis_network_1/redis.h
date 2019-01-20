@@ -8,6 +8,33 @@
 #ifndef _REDIS_H
 #define _REDIS_H
 
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <time.h>
+#include <limits.h>
+#include <unistd.h>
+#include <errno.h>
+#include <inttypes.h>
+#include <pthread.h>
+#include <syslog.h>
+#include <netinet/in.h>
+#include <signal.h>
+#include "anet.h"
+#include "ae.h"
+#include "sds.h"
+#include "zmalloc.h"
+
+// 对象编码
+#define REDIS_ENCODING_RAW 0     /* Raw representation */
+
+/* 对象类型 */
+#define REDIS_STRING 0 
+#define REDIS_LIST 1
+#define REDIS_SET 2
+#define REDIS_ZSET 3
+#define REDIS_HASH 4
+
 /* Static server configuration */
 #define REDIS_DEFAULT_HZ        10 
 #define REDIS_SERVERPORT		6379 /* TCP port */
@@ -17,6 +44,27 @@
 #define REDIS_DEFAULT_DBNUM     16
 #define REDIS_DEFAULT_TCP_KEEPALIVE 0
 
+/* 对象编码 */
+#define REDIS_ENCODING_RAW 0     /* Raw representation 原始代表*/
+#define REDIS_ENCODING_INT 1     /* Encoded as integer */
+#define REDIS_ENCODING_EMBSTR 8  /* Embedded sds string encoding */
+
+/*
+ * redisObject redis对象
+ * 这个地方使用到了位域目的是为了节省内存
+ */
+typedef struct redisObject {
+    unsigned type : 4; // 类型
+    unsigned encoding : 4; // 编码
+    unsigned lru : REDIS_LRU_BITS; //对象最后一次被访问的时间
+    int refcount; // 引用计数
+    void *ptr; //　指向实际值的指针　
+} robj;
+
+
+typedef struct redisDb {
+ 
+} redisDb;
 
 typedef struct redisClient {
 
